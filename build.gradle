@@ -1,41 +1,52 @@
 import org.gradle.internal.os.OperatingSystem
 
 switch (OperatingSystem.current()) {
-	case OperatingSystem.LINUX:
-		def osArch = System.getProperty("os.arch")
-		project.ext.lwjglNatives = osArch.startsWith("arm") || osArch.startsWith("aarch64")
-				? "natives-linux-${osArch.contains("64") || osArch.startsWith("armv8") ? "arm64" : "arm32"}"
-				: "natives-linux"
-		break
-	case OperatingSystem.MAC_OS:
-		project.ext.lwjglNatives = "natives-macos"
-		break
-	case OperatingSystem.WINDOWS:
-		project.ext.lwjglNatives = System.getProperty("os.arch").contains("64") ? "natives-windows" : "natives-windows-x86"
-		break
+    case OperatingSystem.LINUX:
+        def osArch = System.getProperty("os.arch")
+        project.ext.lwjglNatives = osArch.startsWith("arm") || osArch.startsWith("aarch64")
+                ? "natives-linux-${osArch.contains("64") || osArch.startsWith("armv8") ? "arm64" : "arm32"}"
+                : "natives-linux"
+        break
+    case OperatingSystem.MAC_OS:
+        project.ext.lwjglNatives = "natives-macos"
+        break
+    case OperatingSystem.WINDOWS:
+        project.ext.lwjglNatives = System.getProperty("os.arch").contains("64") ? "natives-windows" : "natives-windows-x86"
+        break
 }
 
 apply plugin: 'idea'
 apply plugin: 'java-library'
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation platform("org.lwjgl:lwjgl-bom:$project.lwjglVersion")
+    implementation platform("org.lwjgl:lwjgl-bom:$project.lwjglVersion")
 
-	implementation "org.lwjgl:lwjgl"
-	implementation "org.lwjgl:lwjgl-glfw"
-	runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
-	runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    implementation "org.lwjgl:lwjgl"
+    implementation "org.lwjgl:lwjgl-glfw"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
 
-	compileOnly 'org.jetbrains:annotations:23.0.0'
+    compileOnly 'org.jetbrains:annotations:23.0.0'
+    implementation "org.slf4j:slf4j-api:2.0.3"
 
-	testImplementation 'com.google.guava:guava:31.1-jre'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
+    // Objective C for Mac
+    implementation "ca.weblite:java-objc-bridge:${project.objc_version}"
+
+    testImplementation 'com.google.guava:guava:31.1-jre'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
+
+    // Test OpenGL
+    testImplementation "org.lwjgl:lwjgl-opengl"
+    testRuntimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+
+    testImplementation 'ch.qos.logback:logback-core:1.4.4'
+    testImplementation 'ch.qos.logback:logback-classic:1.4.4'
 }
 
 test {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
