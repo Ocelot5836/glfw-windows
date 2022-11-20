@@ -17,6 +17,10 @@ switch (OperatingSystem.current()) {
 
 apply plugin: 'idea'
 apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+
+group 'io.github.ocelot'
+version '1.0.0'
 
 repositories {
     mavenCentral()
@@ -49,4 +53,12 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+        }
+    }
 }

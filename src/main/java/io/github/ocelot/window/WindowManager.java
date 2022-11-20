@@ -1,5 +1,6 @@
 package io.github.ocelot.window;
 
+import io.github.ocelot.window.util.MathUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.glfwTerminate;
 
 /**
  * Manages monitors and all windows created.
@@ -25,6 +25,8 @@ import static org.lwjgl.glfw.GLFW.glfwTerminate;
  * @author Ocelot
  */
 public class WindowManager implements NativeResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WindowManager.class);
 
     private final Map<Long, Monitor> monitors;
     private final Set<Window> windows;
@@ -37,8 +39,7 @@ public class WindowManager implements NativeResource {
         String preError = getGLFWError();
         if (preError != null)
             throw new IllegalStateException("GLFW error before init: " + preError);
-        Logger logger = LoggerFactory.getLogger(StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).getCallerClass());
-        GLFWErrorCallback old = glfwSetErrorCallback((error, description) -> logger.error(String.format("GLFW error during init: [0x%X]%s", error, MemoryUtil.memUTF8(description))));
+        GLFWErrorCallback old = glfwSetErrorCallback((error, description) -> LOGGER.error(String.format("GLFW error during init: [0x%X]%s", error, MemoryUtil.memUTF8(description))));
         if (!glfwInit()) {
             glfwTerminate();
             throw new RuntimeException("Failed to initialize GLFW.");
@@ -49,9 +50,12 @@ public class WindowManager implements NativeResource {
 
         GLFWMonitorCallback callback = glfwSetMonitorCallback((monitor, event) -> {
             if (event == GLFW_CONNECTED) {
-                this.monitors.put(monitor, new Monitor(monitor));
+                Monitor m = new Monitor(monitor);
+                this.monitors.put(monitor, m);
+                LOGGER.debug("Monitor {} connected", m);
             } else if (event == GLFW_DISCONNECTED) {
-                this.monitors.remove(monitor);
+                Monitor m = this.monitors.remove(monitor);
+                LOGGER.debug("Monitor {} disconnected", m);
             }
         });
         if (callback != null)
@@ -64,10 +68,6 @@ public class WindowManager implements NativeResource {
                 this.monitors.put(handle, new Monitor(handle));
             }
         }
-    }
-
-    private static int clamp(int value, int min, int max) {
-        return value < min ? min : Math.min(value, max);
     }
 
     /**
@@ -103,6 +103,7 @@ public class WindowManager implements NativeResource {
      */
     public Window create(int width, int height, boolean fullscreen) {
         Window window = new Window(this, width, height, fullscreen);
+        LOGGER.debug("Created {}", window);
         this.windows.add(window);
         return window;
     }
@@ -168,10 +169,10 @@ public class WindowManager implements NativeResource {
             int maxX = minX + monitor.getCurrentMode().width();
             int minY = monitor.getY();
             int maxY = minY + monitor.getCurrentMode().height();
-            int t = clamp(windowMinX, minX, maxX);
-            int u = clamp(windowMaxX, minX, maxX);
-            int v = clamp(windowMinY, minY, maxY);
-            int w = clamp(windowMaxY, minY, maxY);
+            int t = MathUtils.clamp(windowMinX, minX, maxX);
+            int u = MathUtils.clamp(windowMaxX, minX, maxX);
+            int v = MathUtils.clamp(windowMinY, minY, maxY);
+            int w = MathUtils.clamp(windowMaxY, minY, maxY);
             int xArea = Math.max(0, u - t);
             int yArea = Math.max(0, w - v);
             int area = xArea * yArea;

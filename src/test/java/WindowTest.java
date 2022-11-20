@@ -2,7 +2,6 @@ import io.github.ocelot.window.Window;
 import io.github.ocelot.window.WindowEventListener;
 import io.github.ocelot.window.WindowManager;
 import io.github.ocelot.window.input.KeyMods;
-import io.github.ocelot.window.input.KeyboardHandler;
 import io.github.ocelot.window.input.MouseHandler;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.GL;
@@ -23,14 +22,7 @@ public class WindowTest {
             glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
 
             Window test = windowManager.create("Test", 800, 600, false);
-
-            test.addListener(new WindowEventListener() {
-                @Override
-                public void keyPressed(Window window, int key, int scanCode, KeyMods mods) {
-                    if (key == GLFW_KEY_ESCAPE)
-                        window.setClosing(true);
-                }
-            });
+            test.addListener(new DefaultListener());
 
             while (!test.isClosed()) {
                 windowManager.update();
@@ -52,15 +44,7 @@ public class WindowTest {
             Window test = windowManager.create("Test", 800, 600, true);
             GL.createCapabilities();
 
-            test.addListener(new WindowEventListener() {
-                @Override
-                public void keyPressed(Window window, int key, int scanCode, KeyMods mods) {
-                    if (key == GLFW_KEY_ENTER)
-                        window.toggleFullscreen();
-                    if (key == GLFW_KEY_ESCAPE)
-                        window.setClosing(true);
-                }
-            });
+            test.addListener(new DefaultListener());
 
             while (!test.isClosed()) {
                 windowManager.update();
@@ -91,13 +75,8 @@ public class WindowTest {
                         }
                     }
                 }
-
-                @Override
-                public void keyPressed(Window window, int key, int scanCode, KeyMods mods) {
-                    if (key == GLFW_KEY_ESCAPE)
-                        window.setClosing(true);
-                }
             });
+            test.addListener(new DefaultListener());
 
             while (!test.isClosed()) {
                 windowManager.update();
@@ -129,17 +108,8 @@ public class WindowTest {
 
             glfwMakeContextCurrent(test1.getHandle());
 
-            WindowEventListener listener = new WindowEventListener() {
-                @Override
-                public void keyPressed(Window window, int key, int scanCode, KeyMods mods) {
-                    if (key == GLFW_KEY_T)
-                        window.center();
-                    if (key == GLFW_KEY_ESCAPE)
-                        window.setClosing(true);
-                }
-            };
-            test1.addListener(listener);
-            test2.addListener(listener);
+            test1.addListener(new DefaultListener());
+            test2.addListener(new DefaultListener());
 
             while (!test1.isClosed()) {
                 windowManager.update();
@@ -150,6 +120,21 @@ public class WindowTest {
             }
 
             LOGGER.info("Closing");
+        }
+    }
+
+    private static class DefaultListener implements WindowEventListener {
+        @Override
+        public void keyPressed(Window window, int key, int scanCode, KeyMods mods) {
+            if (key == GLFW_KEY_T)
+                window.center();
+            if (key == GLFW_KEY_ESCAPE)
+                window.setClosing(true);
+        }
+
+        @Override
+        public void windowClosed(Window window) {
+            LOGGER.info(window + " requested close");
         }
     }
 }

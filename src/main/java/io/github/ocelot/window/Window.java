@@ -47,6 +47,7 @@ public class Window implements NativeResource {
 
     private final WindowManager windowManager;
     private final List<WindowEventListener> listeners;
+    private CharSequence title;
     private int width;
     private int height;
     private int x;
@@ -71,10 +72,12 @@ public class Window implements NativeResource {
 
     public void addListener(WindowEventListener listener) {
         this.listeners.add(listener);
+        LOGGER.debug("Added listener: {}", listener.getClass().getName());
     }
 
     public void removeListener(WindowEventListener listener) {
         this.listeners.remove(listener);
+        LOGGER.debug("Removed listener: {}", listener.getClass().getName());
     }
 
     /**
@@ -102,6 +105,7 @@ public class Window implements NativeResource {
             this.windowHeight = mode.height();
         }
 
+        this.title = title;
         this.handle = glfwCreateWindow(this.windowWidth, this.windowHeight, title, monitor != null ? monitor.getHandle() : 0L, share);
         if (this.handle == 0L)
             throw new IllegalStateException("Failed to create window: " + title + ". " + WindowManager.getGLFWError());
@@ -124,6 +128,8 @@ public class Window implements NativeResource {
         }
 
         glfwMakeContextCurrent(this.handle);
+
+        LOGGER.debug("Initialized {}", this);
 
         glfwSetWindowCloseCallback(this.handle, window -> {
             this.closed = true;
@@ -286,6 +292,14 @@ public class Window implements NativeResource {
         return this.swapInterval > 0;
     }
 
+    /**
+     * @return The title of the window or <code>null</code> if the window has not been initialized yet
+     */
+    @Nullable
+    public CharSequence getTitle() {
+        return title;
+    }
+
     public boolean isFocused() {
         return focused;
     }
@@ -353,8 +367,10 @@ public class Window implements NativeResource {
     }
 
     public void setTitle(CharSequence title) {
-        if (this.handle != 0)
+        if (this.handle != 0L) {
             glfwSetWindowTitle(this.handle, title);
+            this.title = title;
+        }
     }
 
     /**
@@ -369,13 +385,15 @@ public class Window implements NativeResource {
     }
 
     public void setPosition(int x, int y) {
-        if (this.handle != 0L)
+        if (this.handle != 0L) {
             glfwSetWindowPos(this.handle, x, y);
+        }
     }
 
     public void setSize(int width, int height) {
-        if (this.handle != 0L)
+        if (this.handle != 0L) {
             glfwSetWindowSize(this.handle, width, height);
+        }
     }
 
     /**
@@ -388,6 +406,11 @@ public class Window implements NativeResource {
             this.closed = closing;
             glfwSetWindowShouldClose(this.handle, closing);
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Window[%s %s,%s %sx%s]", this.title == null ? this.handle : this.title, this.x, this.y, this.windowWidth, this.windowHeight);
     }
 
     /**
