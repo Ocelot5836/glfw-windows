@@ -1,6 +1,5 @@
 package io.github.ocelot.window;
 
-import io.github.ocelot.window.util.MathUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
@@ -37,16 +36,18 @@ public class WindowManager implements NativeResource {
 
         // Initialize GLFW
         String preError = getGLFWError();
-        if (preError != null)
+        if (preError != null) {
             throw new IllegalStateException("GLFW error before init: " + preError);
+        }
         GLFWErrorCallback old = glfwSetErrorCallback((error, description) -> LOGGER.error(String.format("GLFW error during init: [0x%X]%s", error, MemoryUtil.memUTF8(description))));
         if (!glfwInit()) {
             glfwTerminate();
             throw new RuntimeException("Failed to initialize GLFW.");
         }
         GLFWErrorCallback o = glfwSetErrorCallback(old);
-        if (o != null)
+        if (o != null) {
             o.free();
+        }
 
         GLFWMonitorCallback callback = glfwSetMonitorCallback((monitor, event) -> {
             if (event == GLFW_CONNECTED) {
@@ -58,8 +59,9 @@ public class WindowManager implements NativeResource {
                 LOGGER.debug("Monitor {} disconnected", m);
             }
         });
-        if (callback != null)
+        if (callback != null) {
             callback.free();
+        }
 
         PointerBuffer monitors = glfwGetMonitors();
         if (monitors != null) {
@@ -73,14 +75,14 @@ public class WindowManager implements NativeResource {
     /**
      * @return The current GLFW error or <code>null</code> if there currently isn't one
      */
-    @Nullable
-    public static String getGLFWError() {
+    public static @Nullable String getGLFWError() {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             PointerBuffer pointer = stack.mallocPointer(1);
             int error = glfwGetError(pointer);
-            if (error == GLFW_NO_ERROR)
+            if (error == GLFW_NO_ERROR) {
                 return null;
-            return "[0x" + Integer.toHexString(error) + "]" + MemoryUtil.memUTF8(pointer.get());
+            }
+            return "[0x%X] %s".formatted(error, MemoryUtil.memUTF8(pointer.get(0)));
         }
     }
 
@@ -98,7 +100,7 @@ public class WindowManager implements NativeResource {
      *
      * @param width      The width of the window
      * @param height     The height of the window
-     * @param fullscreen Whether to initialize in fullscreen or not
+     * @param fullscreen Whether to initialize in full screen or not
      * @return The window created
      */
     public Window create(int width, int height, boolean fullscreen) {
@@ -141,7 +143,13 @@ public class WindowManager implements NativeResource {
         this.windows.remove(window);
     }
 
-    public Monitor getMonitor(long handle) {
+    /**
+     * Retrieves the monitor with the specified id.
+     *
+     * @param handle The handle of the monitor
+     * @return The monitor with that id or <code>null</code> if no monitor could be found
+     */
+    public @Nullable Monitor getMonitor(long handle) {
         return this.monitors.get(handle);
     }
 
@@ -149,12 +157,13 @@ public class WindowManager implements NativeResource {
      * Finds the best monitor to use for fullscreen based on how much each monitor covers the window.
      *
      * @param window The window to test
-     * @return The monitor the window best fits on
+     * @return The monitor the window best fits on or <code>null</code> if no monitor could be found
      */
-    public Monitor findBestMonitor(Window window) {
+    public @Nullable Monitor findBestMonitor(Window window) {
         long windowMonitor = window.getHandle() != 0L ? glfwGetWindowMonitor(window.getHandle()) : 0L;
-        if (windowMonitor != 0L)
+        if (windowMonitor != 0L) {
             return this.getMonitor(windowMonitor);
+        }
 
         int windowMinX = window.getX();
         int windowMaxX = windowMinX + window.getWindowWidth();
@@ -169,10 +178,10 @@ public class WindowManager implements NativeResource {
             int maxX = minX + monitor.getCurrentMode().width();
             int minY = monitor.getY();
             int maxY = minY + monitor.getCurrentMode().height();
-            int t = MathUtils.clamp(windowMinX, minX, maxX);
-            int u = MathUtils.clamp(windowMaxX, minX, maxX);
-            int v = MathUtils.clamp(windowMinY, minY, maxY);
-            int w = MathUtils.clamp(windowMaxY, minY, maxY);
+            int t = clamp(windowMinX, minX, maxX);
+            int u = clamp(windowMaxX, minX, maxX);
+            int v = clamp(windowMinY, minY, maxY);
+            int w = clamp(windowMaxY, minY, maxY);
             int xArea = Math.max(0, u - t);
             int yArea = Math.max(0, w - v);
             int area = xArea * yArea;
@@ -189,11 +198,16 @@ public class WindowManager implements NativeResource {
         return bestMonitor;
     }
 
+    private static int clamp(int value, int min, int max) {
+        return value < min ? min : Math.min(value, max);
+    }
+
     @Override
     public void free() {
         GLFWMonitorCallback callback = glfwSetMonitorCallback(null);
-        if (callback != null)
+        if (callback != null) {
             callback.free();
+        }
         Set.copyOf(this.windows).forEach(Window::free);
         glfwTerminate();
     }

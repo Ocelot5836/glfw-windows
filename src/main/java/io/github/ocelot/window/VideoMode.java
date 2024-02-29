@@ -3,8 +3,6 @@ package io.github.ocelot.window;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWVidMode.Buffer;
 
-import java.util.regex.Pattern;
-
 public record VideoMode(int width, int height, int redBits, int greenBits, int blueBits, int refreshRate) {
 
     public VideoMode(Buffer buffer) {

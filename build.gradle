@@ -20,7 +20,7 @@ apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
 group 'io.github.ocelot'
-version '1.0.0'
+version '1.0.1'
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
@@ -30,38 +30,42 @@ repositories {
 }
 
 dependencies {
-    implementation platform("org.lwjgl:lwjgl-bom:$project.lwjglVersion")
+    implementation platform("org.lwjgl:lwjgl-bom:3.3.3")
 
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-glfw"
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
 
-    compileOnly 'org.jetbrains:annotations:23.0.0'
-    implementation "org.slf4j:slf4j-api:2.0.3"
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+    implementation "org.slf4j:slf4j-api:2.0.12"
 
     // Objective C for Mac
-    implementation "ca.weblite:java-objc-bridge:${project.objc_version}"
+    implementation "ca.weblite:java-objc-bridge:1.2"
 
-    testImplementation 'com.google.guava:guava:31.1-jre'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
     // Test OpenGL
     testImplementation "org.lwjgl:lwjgl-opengl"
     testRuntimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
 
-    testImplementation 'ch.qos.logback:logback-core:1.4.4'
-    testImplementation 'ch.qos.logback:logback-classic:1.4.4'
+    testImplementation 'ch.qos.logback:logback-core:1.5.1'
+    testImplementation 'ch.qos.logback:logback-classic:1.5.1'
 }
 
 test {
     useJUnitPlatform()
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            artifact jar
+        myJava(MavenPublication) {
+            from components.java
         }
     }
 }

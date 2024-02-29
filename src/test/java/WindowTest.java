@@ -3,6 +3,7 @@ import io.github.ocelot.window.WindowEventListener;
 import io.github.ocelot.window.WindowManager;
 import io.github.ocelot.window.input.KeyMods;
 import io.github.ocelot.window.input.MouseHandler;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.GL;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+@Disabled
 public class WindowTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WindowTest.class);
@@ -83,8 +85,9 @@ public class WindowTest {
 
                 double dx = mouseHandler.getAccumulatedDX();
                 double dy = mouseHandler.getAccumulatedDY();
-                if (dx != 0 || dy != 0)
+                if (dx != 0 || dy != 0) {
                     LOGGER.info(dx + ", " + dy);
+                }
             }
 
             LOGGER.info("Closing");
@@ -113,10 +116,12 @@ public class WindowTest {
 
             while (!test1.isClosed()) {
                 windowManager.update();
-                if (test1.isClosed())
+                if (test1.isClosed()) {
                     test1.free();
-                if (test2.isClosed())
+                }
+                if (test2.isClosed()) {
                     test2.free();
+                }
             }
 
             LOGGER.info("Closing");
@@ -126,10 +131,12 @@ public class WindowTest {
     private static class DefaultListener implements WindowEventListener {
         @Override
         public void keyPressed(Window window, int key, int scanCode, KeyMods mods) {
-            if (key == GLFW_KEY_T)
+            if (key == GLFW_KEY_T) {
                 window.center();
-            if (key == GLFW_KEY_ESCAPE)
+            }
+            if (key == GLFW_KEY_ESCAPE) {
                 window.setClosing(true);
+            }
         }
 
         @Override

@@ -29,11 +29,9 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFWNativeCocoa.glfwGetCocoaWindow;
 
 /**
- * Manages and tracks certain key events for windows. Events are passed to all registered listeners.
- * <p>
- * In order to use graphics, create the capabilities for the desired API after calling {@link #create(CharSequence)}.
- * <p>
- * For example, to use LWJGL OpenGL use <code>org.lwjgl.opengl.GL.createCapabilities()</code>
+ * <p>Manages and tracks certain key events for windows. Events are passed to all registered listeners.</p>
+ * <p>In order to use graphics, create the capabilities for the desired API after calling {@link #create(CharSequence)}.</p>
+ * <p>For example, to use LWJGL OpenGL use <code>org.lwjgl.opengl.GL.createCapabilities()</code></p>
  *
  * @author Ocelot
  * @see WindowEventListener
@@ -70,11 +68,21 @@ public class Window implements NativeResource {
         this.swapInterval = 0;
     }
 
+    /**
+     * Adds the specified listener to the event list.
+     *
+     * @param listener The listener to add
+     */
     public void addListener(WindowEventListener listener) {
         this.listeners.add(listener);
         LOGGER.debug("Added listener: {}", listener.getClass().getName());
     }
 
+    /**
+     * Removes the specified listener to the event list.
+     *
+     * @param listener The listener to add
+     */
     public void removeListener(WindowEventListener listener) {
         this.listeners.remove(listener);
         LOGGER.debug("Removed listener: {}", listener.getClass().getName());
@@ -100,19 +108,23 @@ public class Window implements NativeResource {
         Monitor monitor = null;
         if (this.fullscreen) {
             monitor = this.windowManager.findBestMonitor(this);
-            VideoMode mode = monitor.getCurrentMode();
-            this.windowWidth = mode.width();
-            this.windowHeight = mode.height();
+            if (monitor != null) {
+                VideoMode mode = monitor.getCurrentMode();
+                this.windowWidth = mode.width();
+                this.windowHeight = mode.height();
+            }
         }
 
         this.title = title;
         this.handle = glfwCreateWindow(this.windowWidth, this.windowHeight, title, monitor != null ? monitor.getHandle() : 0L, share);
-        if (this.handle == 0L)
+        if (this.handle == 0L) {
             throw new IllegalStateException("Failed to create window: " + title + ". " + WindowManager.getGLFWError());
+        }
 
         // Center on the screen
-        if (!this.fullscreen)
+        if (!this.fullscreen) {
             this.center();
+        }
 
         // Focus
         this.focused = true;
@@ -135,10 +147,10 @@ public class Window implements NativeResource {
             this.closed = true;
             this.listeners.forEach(listener -> listener.windowClosed(this));
         });
-        glfwSetWindowPosCallback(this.handle, (window, xpos, ypos) -> {
-            this.x = xpos;
-            this.y = ypos;
-            this.listeners.forEach(listener -> listener.windowMoved(this, xpos, ypos));
+        glfwSetWindowPosCallback(this.handle, (window, x, y) -> {
+            this.x = x;
+            this.y = y;
+            this.listeners.forEach(listener -> listener.windowMoved(this, x, y));
         });
         glfwSetWindowSizeCallback(this.handle, (window, w, h) -> {
             this.width = this.windowWidth = w;
@@ -156,8 +168,9 @@ public class Window implements NativeResource {
         });
         glfwSetDropCallback(this.handle, (window, count, names) -> {
             Path[] paths = new Path[count];
-            for (int i = 0; i < paths.length; i++)
+            for (int i = 0; i < paths.length; i++) {
                 paths[i] = Paths.get(GLFWDropCallback.getName(names, i));
+            }
             this.listeners.forEach(listener -> listener.filesDropped(this, paths));
         });
         glfwSetCharModsCallback(this.handle, (window, codepoint, mods) -> this.listeners.forEach(listener -> listener.charTyped(this, codepoint, new KeyMods(mods))));
@@ -187,7 +200,7 @@ public class Window implements NativeResource {
     }
 
     /**
-     * Creates the base implementation of mouse tracking and automatically adds it to the listeners.
+     * Creates the default implementation of mouse tracking and automatically adds it to the listeners.
      *
      * @return A new mouse handler that tracks events for this window
      */
@@ -198,7 +211,7 @@ public class Window implements NativeResource {
     }
 
     /**
-     * Creates the base implementation of key tracking and automatically adds it to the listeners.
+     * Creates the default implementation of key tracking and automatically adds it to the listeners.
      *
      * @return A new keyboard handler that tracks events for this window
      */
@@ -238,56 +251,68 @@ public class Window implements NativeResource {
      * @return The GLFW id of the window
      */
     public long getHandle() {
-        return handle;
+        return this.handle;
     }
 
+    /**
+     * @return The absolute x position of the window
+     */
     public int getX() {
-        return x;
+        return this.x;
     }
 
+    /**
+     * @return The absolute y position of the window
+     */
     public int getY() {
-        return y;
+        return this.y;
     }
 
     /**
      * @return The width of the physical window. {@link #getFramebufferWidth()} should be used for drawing logic
      */
     public int getWindowWidth() {
-        return windowWidth;
+        return this.windowWidth;
     }
 
     /**
      * @return The width of the physical window. {@link #getFramebufferHeight()} should be used for drawing logic
      */
     public int getWindowHeight() {
-        return windowHeight;
+        return this.windowHeight;
     }
 
     /**
      * @return The width of the canvas in the window
      */
     public int getFramebufferWidth() {
-        return framebufferWidth;
+        return this.framebufferWidth;
     }
 
     /**
      * @return The height of the canvas in the window
      */
     public int getFramebufferHeight() {
-        return framebufferHeight;
+        return this.framebufferHeight;
     }
 
+    /**
+     * @return Whether the window is currently full screen
+     */
     public boolean isFullscreen() {
-        return fullscreen;
+        return this.fullscreen;
     }
 
     /**
      * @return The number of monitor frames to wait before continuing execution when {@link #swapBuffers()} is called
      */
     public int getSwapInterval() {
-        return swapInterval;
+        return this.swapInterval;
     }
 
+    /**
+     * @return Whether vsync is enabled
+     */
     public boolean isVsync() {
         return this.swapInterval > 0;
     }
@@ -295,27 +320,28 @@ public class Window implements NativeResource {
     /**
      * @return The title of the window or <code>null</code> if the window has not been initialized yet
      */
-    @Nullable
-    public CharSequence getTitle() {
-        return title;
+    public @Nullable CharSequence getTitle() {
+        return this.title;
     }
 
+    /**
+     * @return If the window is currently focused
+     */
     public boolean isFocused() {
-        return focused;
+        return this.focused;
     }
 
     /**
      * @return If the window is requesting to close
      */
     public boolean isClosed() {
-        return closed;
+        return this.closed;
     }
 
     /**
      * @return The current string on the clipboard or <code>null</code> if there is nothing
      */
-    @Nullable
-    public String getClipboard() {
+    public @Nullable String getClipboard() {
         return glfwGetClipboardString(this.handle);
     }
 
@@ -326,8 +352,9 @@ public class Window implements NativeResource {
      */
     public void setFullscreen(boolean fullscreen) {
         this.fullscreen = fullscreen;
-        if (this.handle == 0L) // will be updated later
+        if (this.handle == 0L) { // will be updated later
             return;
+        }
 
         try {
             Monitor monitor = this.windowManager.findBestMonitor(this);
@@ -335,8 +362,9 @@ public class Window implements NativeResource {
                 this.fullscreen = false;
                 return;
             }
-            if (Platform.get() == Platform.MACOSX)
+            if (Platform.get() == Platform.MACOSX) {
                 getNsWindow(this.handle).filter(Window::isInKioskMode).ifPresent(Window::toggleMacFullscreen);
+            }
 
             VideoMode mode = monitor.getCurrentMode();
             if (this.fullscreen) {
@@ -362,10 +390,20 @@ public class Window implements NativeResource {
         this.swapInterval = Math.max(0, swapInterval);
     }
 
+    /**
+     * Sets the window to use vsync.
+     *
+     * @param vsync Whether vsync should be enabled
+     */
     public void setVsync(boolean vsync) {
         this.swapInterval = vsync ? 1 : 0;
     }
 
+    /**
+     * Updates the window title to the specified string.
+     *
+     * @param title The new window title
+     */
     public void setTitle(CharSequence title) {
         if (this.handle != 0L) {
             glfwSetWindowTitle(this.handle, title);
@@ -384,12 +422,24 @@ public class Window implements NativeResource {
         }
     }
 
+    /**
+     * Sets the absolute position of the window.
+     *
+     * @param x The new x position
+     * @param y The new y position
+     */
     public void setPosition(int x, int y) {
         if (this.handle != 0L) {
             glfwSetWindowPos(this.handle, x, y);
         }
     }
 
+    /**
+     * Sets the size of the window.
+     *
+     * @param width  The new x size
+     * @param height The new y size
+     */
     public void setSize(int width, int height) {
         if (this.handle != 0L) {
             glfwSetWindowSize(this.handle, width, height);
@@ -410,7 +460,7 @@ public class Window implements NativeResource {
 
     @Override
     public String toString() {
-        return String.format("Window[%s %s,%s %sx%s]", this.title == null ? this.handle : this.title, this.x, this.y, this.windowWidth, this.windowHeight);
+        return String.format("Window[%s %s,%s %sx%s]", this.title != null ? this.title : this.handle, this.x, this.y, this.windowWidth, this.windowHeight);
     }
 
     /**

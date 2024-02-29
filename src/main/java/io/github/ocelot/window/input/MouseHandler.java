@@ -64,16 +64,18 @@ public class MouseHandler implements WindowEventListener {
 
     @Override
     public void cursorEntered(Window window, boolean entered) {
-        if (entered)
+        if (entered) {
             this.ignoreFirstMovement = true;
+        }
     }
 
     /**
      * Grabs the mouse by disabling it and moving it to the center of the window.
      */
     public void grabMouse() {
-        if (!this.window.isFocused())
+        if (!this.window.isFocused()) {
             return;
+        }
         this.mouseGrabbed = true;
         this.mouseX = this.window.getWindowWidth() / 2.0;
         this.mouseY = this.window.getWindowHeight() / 2.0;
@@ -88,8 +90,9 @@ public class MouseHandler implements WindowEventListener {
      * Releases the mouse and sets its position to the center of the window.
      */
     public void releaseMouse() {
-        if (!this.mouseGrabbed)
+        if (!this.mouseGrabbed) {
             return;
+        }
         this.mouseGrabbed = false;
         this.mouseX = this.window.getWindowWidth() / 2.0;
         this.mouseY = this.window.getWindowHeight() / 2.0;
