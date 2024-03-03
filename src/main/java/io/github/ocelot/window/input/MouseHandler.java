@@ -73,7 +73,7 @@ public class MouseHandler implements WindowEventListener {
      * Grabs the mouse by disabling it and moving it to the center of the window.
      */
     public void grabMouse() {
-        if (!this.window.isFocused()) {
+        if (!this.window.isFocused() || this.mouseGrabbed) {
             return;
         }
         this.mouseGrabbed = true;
